@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "bin/dmm_util",
+    "dmm_util.gemspec",
     "lib/dmm_util.rb",
     "lib/dmm_util/cursor.rb",
     "lib/dmm_util/fluke28x_driver.rb",
