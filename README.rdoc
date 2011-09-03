@@ -1,6 +1,18 @@
 = dmm_util
 
-Description goes here.
+dmm_util is a utility for downloading TrendPlot and saved measurements from Fluke 289 and 287 Series multimeters. 
+The tool allows you to download data from your meter without the FlukeView software. dmm_util also provides a 
+library for communicating with your meter in order to perform automated measurements or more complicated operations.
+
+== Install
+
+  gem install dmm_util
+
+== Simple use
+  
+  dmm_util help
+  dmm_util info
+
 
 == Contributing to dmm_util
  
