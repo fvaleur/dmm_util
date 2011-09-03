@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+
+require File.expand_path('../../lib/dmm_util', __FILE__)
+
+def usage 
+  $stderr.write "Usage: dmm_util info                                        : Display info about the meter\n"
+  $stderr.write "       dmm_util recordings [index|name] ...                 : Display one or all recordings\n"
+  $stderr.write "       dmm_util saved_measurements [index|name]             : Display one or all saved measurements\n"
+  $stderr.write "       dmm_util saved_min_max [index|name]                  : Display one or all saved min max measurements\n"
+  $stderr.write "       dmm_util saved_peak [index|name]                     : Display one or all saved peak measurements\n"
+  $stderr.write "       dmm_util measure_now                                 : Display the current meter value\n"
+  $stderr.write "       dmm_util set <company|contact|operator|site> <value> : Set meter contact info\n"
+  $stderr.write "       dmm_util sync_time                                   : Sync the clock on the DMM to the computer clock\n"
+  $stderr.write "\n"
+  exit(1)
+end
+
+def parse_int_if(val)
+  return Integer(val)
+rescue ArgumentError
+  return val
+end
+
+def do_info
+  meter = DmmUtil.open
+  info = meter.driver.id
+  puts "Model: #{info[:model_number]}"
+  puts "Software Version: #{info[:software_version]}"
+  puts "Serial Number: #{info[:serial_number]}"
+  puts "Current meter time: #{meter.driver.clock}"
+  [:company, :contact, :operator, :site].each do |prop|
+    val = meter.driver.send(prop)
+    puts "#{prop.to_s.capitalize}: #{val}" unless val == ""
+  end
+end
+
+def do_set(property, value)
+  meter = DmmUtil.open
+  meter.driver.send(:"#{property}=", value)
+  puts "Sucsessfully set #{property} value"
+end
+
+def do_sync_time
+  meter = DmmUtil.open
+  meter.driver.clock = Time.now
+  puts "Sucsessfully synced the clock of the DMM"
+end
+
+def do_saved_measurements(type = :saved_measurements)
+  meter = DmmUtil.open
+  measurements = meter.send(type)
+  if ARGV.size == 1
+    measurements.each do |measurement|
+      puts "#{measurement.name} [#{measurement.ts}] : #{measurement.to_s}"
+    end
+  else
+    ARGV[1..-1].each do |idx|
+      idx = parse_int_if(idx)
+      if idx.is_a?(String)
+        measurement = measurements.find{|r| r.name == idx}
+      else
+        measurement = measurements[idx]
+      end
+      raise "Measurement '#{idx}' not found" unless measurement
+      puts "#{measurement.name} [#{measurement.ts}] : #{measurement.to_s}"
+    end
+  end
+end
+  
+def do_recordings
+  meter = DmmUtil.open
+  if ARGV.size == 1
+    # List all recordings
+    meter.recordings.each do |recording| 
+      puts "#{recording.name} [#{recording.start_ts} - #{recording.end_ts}] : #{recording.num_samples} measurements"
+    end
+  else
+    ARGV[1..-1].each do |idx|
+      idx = parse_int_if(idx)
+      if idx.is_a?(String)
+        recording = meter.recordings.find{|r| r.name == idx}
+      else
+        recording = meter.recordings[idx]
+      end
+      raise "Recording '#{idx}' not found" unless recording
+      
+      puts "#{recording.name} (detail) [#{recording.start_ts} - #{recording.end_ts}] : #{recording.num_samples} measurements"
+      recording.measurements.each do |measurement|
+        puts "#{measurement.start_ts} : #{measurement.to_s}"
+      end
+    end
+  end
+  
+end
+
+def do_measure_now
+  meter = DmmUtil.open
+  measurement = meter.measure_now
+  puts "NOW: #{measurement.to_s}"
+end
+
+
+########### MAIN #############
+usage if ARGV.empty?
+
+case ARGV[0]
+when "info"
+  do_info
+when "saved_measurements"
+  do_saved_measurements(:saved_measurements)
+when 'saved_min_max'
+  do_saved_measurements(:saved_min_max)
+when 'saved_peak'
+  do_saved_measurements(:saved_peak)
+when "recordings"
+  do_recordings
+when "measure_now"
+  do_measure_now
+when "set"
+  usage unless ARGV.size == 3
+  usage unless ["company", "site", "operator", "contact"].include?(ARGV[1])
+  do_set(ARGV[1], ARGV[2])
+when "sync_time"
+  do_sync_time
+else usage
+end
+
