@@ -17,18 +17,20 @@ Jeweler::Tasks.new do |gem|
   gem.name = "dmm_util"
   gem.homepage = "http://github.com/fvaleur/dmm_util"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{Library and command line utility to download data from Fluke 28x series DMMs}
+  gem.description = %Q{Library and command line utility to download data from Fluke 28x series DMMs}
   gem.email = "fredrik.valeur@appfolio.com"
   gem.authors = ["Fredrik Valeur"]
   # dependencies defined in Gemfile
+  gem.files.include 'lib/dmm_util/*.rb'
+  gem.executables = ['dmm_util']
 end
 Jeweler::RubygemsDotOrgTasks.new
 
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
   test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/test_*.rb'
+  test.pattern = 'test/**/*_test.rb'
   test.verbose = true
 end
 
